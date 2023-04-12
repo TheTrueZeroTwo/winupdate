@@ -53,7 +53,7 @@ function browser{
     # download and run sea monkey portable
     Write-Host "Downloading and running Sea Monkey Portable"
     Download-File -Url "https://download2.portableapps.com/portableapps/SeaMonkeyPortable/SeaMonkeyPortable_2.53.16_English.paf.exe" -Destination "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
-    Start-Process "C:\Intel\seamonkey2.53.5.win32.installer.exe"
+    Start-Process "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
 }
 
 
@@ -177,10 +177,14 @@ do {
         } '8' {
             add_local_user
         } '9' {
-            gpupdate
+            remove_local_user
         } '10' {
-            browser
+            gpupdate
         } '11' {
+            browser
+        } '12' {
+            print_test
+        } '13' {
             reboot
         } 'q' {
             break
