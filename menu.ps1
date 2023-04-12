@@ -12,11 +12,13 @@ function Show-Menu {
     Write-Host "4: Remove old profiles."
     Write-Host "5: Check system integrity."
     Write-Host "6: Disable hardware acceleration for browsers."
-    Write-Host "7: Don't sleep when lid is closed."
+    Write-Host "7: Disable sleep when lid is closed."
     Write-Host "8: Add local user."
-    Write-Host "9: Gpupdate."
-    Write-Host "10: Download and run Sea Monkey Portable."
-    Write-Host "11: Reboot."
+    Write-Host "9: Remove local user."
+    Write-Host "10: GPUpdate."
+    Write-Host "11: Download and run Sea Monkey Portable."
+    Write-Host "12: Test."
+    Write-Host "13: Reboot."
     Write-Host "Q: Press 'Q' to quit."
 }
 
