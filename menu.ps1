@@ -27,17 +27,34 @@ function Download-File {
     param(
         [Parameter(Mandatory=$true)]
         [string]$Url,
-        [Parameter(Mandatory=$true)]
-        [string]$Destination
+        [string]$Destination = "C:\Intel\"
     )
+
+    if (-not (Test-Path $Destination)) {
+        Write-Host "The destination folder $($Destination) does not exist. Creating it now..."
+        $null = New-Item -ItemType Directory -Path $Destination
+    }
+
+    if ($Destination.EndsWith('\')) {
+        $Destination += [System.IO.Path]::GetFileName($Url)
+    }
+
+    if (Test-Path $Destination) {
+        Write-Host "File $($Destination) already exists. Skipping download."
+        return
+    }
 
     try {
         $webClient = New-Object System.Net.WebClient
         $webClient.DownloadFile($Url, $Destination)
-        Write-Output "File downloaded successfully to $Destination"
+        Write-Output "File downloaded successfully to $($Destination)"
     } catch {
         Write-Error "Failed to download file: $_.Exception.Message"
     }
+
+    if (!(Test-Path $Destination)) {
+        Write-Error "Failed to download file to $($Destination)"
+    }
 }
 
 
@@ -46,42 +63,98 @@ function Download-File {
 
 
 
-function print_test{
-    # test function
-    Write-Host "test"
+
+
+function browser {
+    # Check if Sea Monkey Portable is already installed
+    $smPath = "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
+    if (Test-Path $smPath) {
+        Write-Host "Sea Monkey Portable is already installed at $($smPath)."
+        Start-Process $smPath
+    } else {
+        # Download and run Sea Monkey Portable
+        Write-Host "Downloading and running Sea Monkey Portable"
+        $url = "https://download2.portableapps.com/portableapps/SeaMonkeyPortable/SeaMonkeyPortable_2.53.16_English.paf.exe"
+        $downloadPath = "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
+        if (Test-Path $downloadPath) {
+            Write-Host "File $($downloadPath) already exists. Skipping download."
+        } else {
+            Download-File -Url $url -Destination $downloadPath
+            Write-Host "Downloaded Sea Monkey Portable to $($downloadPath)."
+        }
+        if (Test-Path $downloadPath) {
+            Start-Process $downloadPath
+        } else {
+            Write-Host "Failed to download Sea Monkey Portable."
+        }
+    }
 }
 
-function browser{
-    # download and run sea monkey portable
-    Write-Host "Downloading and running Sea Monkey Portable"
-    Download-File -Url "https://download2.portableapps.com/portableapps/SeaMonkeyPortable/SeaMonkeyPortable_2.53.16_English.paf.exe" -Destination "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
-    Start-Process "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
-}
 
 
-function add_local_user{
-    # add local user
+
+function add_local_user {
+    # Add local user
     Write-Host "Adding local user"
     $fullname = Read-Host "Enter full name"
+    if ([string]::IsNullOrWhiteSpace($fullname)) {
+        Write-Host "Full name cannot be empty."
+        return
+    }
     $username = Read-Host "Enter username"
-    $password = Read-Host "Enter password"
-    $password = ConvertTo-SecureString $password -AsPlainText -Force
-    New-LocalUser -Name $username -Password $password -logonpasswordchange:$true -PasswordNeverExpires:$true -AccountNeverExpires:$true -FullName $fullname
+    if ([string]::IsNullOrWhiteSpace($username)) {
+        Write-Host "Username cannot be empty."
+        return
+    }
+    if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+        Write-Host "Username $($username) already exists."
+        return
+    }
+    $password = Read-Host "Enter password" -AsSecureString
+    $confirmPassword = Read-Host "Confirm password" -AsSecureString
+    if ($password -ne $confirmPassword) {
+        Write-Host "Passwords do not match."
+        return
+    }
+    $logonPasswordChange = Read-Host "Require user to change password at next logon? [Y/N]"
+    $logonPasswordChange = ($logonPasswordChange.ToLower() -eq "y")
+    $password = ConvertFrom-SecureString $password
+    $password = [System.Text.Encoding]::Unicode.GetString($password)
+    New-LocalUser -Name $username -Password $password -AccountNeverExpires $true -PasswordNeverExpires $true -logonpasswordchange $logonPasswordChange -FullName $fullname
+    Write-Host "User $($username) has been created."
 }
 
-function remove_local_user{
-    # display local users and select one to remove
+
+function remove_local_user {
+    # Display local users and select one to remove
     Write-Host "Removing local user"
     $users = Get-LocalUser
+    if ($users.Count -eq 0) {
+        Write-Host "No local users found."
+        return
+    }
     $users | Format-Table -Property Name, FullName
     $user = Read-Host "Enter username to remove"
-    $userToRemove = $users | Where-Object { $_.Name -eq $user }
-    if($userToRemove){
-        Remove-LocalUser -Name $userToRemove.Name
-        Write-Host "User $($userToRemove.Name) has been removed."
-    }else{
-        Write-Host "User $($user) was not found."
+    if ([string]::IsNullOrWhiteSpace($user)) {
+        Write-Host "User name cannot be empty."
+        return
     }
+    $userToRemove = $users | Where-Object { $_.Name -eq $user }
+    if (!$userToRemove) {
+        Write-Host "User $($user) was not found."
+        return
+    }
+    if ($userToRemove.Enabled -eq $false) {
+        Write-Host "User $($userToRemove.Name) is disabled and cannot be removed."
+        return
+    }
+    $confirmation = Read-Host "Are you sure you want to remove user $($userToRemove.Name)? [Y/N]"
+    if ($confirmation.ToLower() -ne "y") {
+        Write-Host "User $($userToRemove.Name) was not removed."
+        return
+    }
+    Remove-LocalUser -Name $userToRemove.Name
+    Write-Host "User $($userToRemove.Name) has been removed."
 }
 
 
@@ -93,22 +166,43 @@ function dont_sleep_when_lid_closed{
     powercfg -SETDCVALUEINDEX 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
 }
 
-function gpupdate{
-    # update group policy
-    gpupdate /force
+function gpupdate {
+    <#
+    Updates group policy on the local computer.
+    #>
+    Write-Host "Updating group policy"
+    $gpupdate = Start-Process -FilePath "gpupdate.exe" -ArgumentList "/force" -PassThru -Wait
+    if ($gpupdate.ExitCode -eq 0) {
+        Write-Host "Group policy updated successfully"
+    } else {
+        Write-Host "Failed to update group policy. Creating gp report in C:\Intel."
+        $reportPath = "C:\Intel\gpupdate_report.html"
+        Get-GPReport -Path $reportPath -Domain $env:USERDNSDOMAIN -ReportType Html
+    }
 }
-function disbale_hwa{
-    # disable hardware acceleration for browsers
-    Write-Host "Disabling hardware acceleration for browsers"
-    # Google Chrome
-    Set-ItemProperty -Path 'HKCU:\Software\Google\Chrome\HardwareAccelerationModeEnabled' -Value 0
-    
-    # Mozilla Firefox
-    Set-ItemProperty -Path 'HKCU:\Software\Mozilla\Firefox\Layers.acceleration.disabled' -Value 1
-    
-    # Microsoft Edge
-    Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Edge\GPUAcceleration' -Value 0
+
+
+function disable_hwa {
+    <#
+    Disables hardware acceleration for browsers.
+    #>
+    $chrome_path = 'HKCU:\Software\Google\Chrome'
+    $firefox_path = 'HKCU:\Software\Mozilla\Firefox'
+    $edge_path = 'HKCU:\Software\Microsoft\Edge'
+    if (Test-Path $chrome_path) {
+        Write-Host "Disabling hardware acceleration for Google Chrome"
+        Set-ItemProperty -Path "$chrome_path\HardwareAccelerationModeEnabled" -Value 0
+    }
+    if (Test-Path $firefox_path) {
+        Write-Host "Disabling hardware acceleration for Mozilla Firefox"
+        Set-ItemProperty -Path "$firefox_path\Layers.acceleration.disabled" -Value 1
+    }
+    if (Test-Path $edge_path) {
+        Write-Host "Disabling hardware acceleration for Microsoft Edge"
+        Set-ItemProperty -Path "$edge_path\GPUAcceleration" -Value 0
+    }
 }
+
 
 
 function update_reboot{
@@ -141,10 +235,15 @@ function remove_old_profiles{
     removes profiles that are older than 30 days, excluding the Administrator profile
     #>
     $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" }
+    if ($profiles.Count -eq 0) {
+        Write-Host "No user profiles found."
+        return
+    }
+    $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split("\")[1]
     $profiles | ForEach-Object {
         $profile = $_
         $profile_age = (Get-Date) - $profile.CreationTime
-        if ($profile_age.Days -gt 30) {
+        if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user -and $profile.Name -ne "Administrator") {
             Write-Host "Removing profile $($profile.Name)"
             Remove-Item -Path $profile.FullName -Recurse -Force
         }
