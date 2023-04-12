@@ -156,39 +156,42 @@ function reboot{
     Restart-Computer -Force
 }
 
-do
- {
+do {
     Show-Menu
     $selection = Read-Host "Please make a selection"
-    switch ($selection)
-    {
-    '1' {
-    update_noreboot
-    } '2' {
-    update_reboot
-    } '3' {
-    bluescreen
-    } '4' {
-    remove_old_profiles
-    } '5' {
-    check_system_integrity
-    } '6' {
-    disbale_hwa
-    } '7' {
-    dont_sleep_when_lid_closed
-    } '8' {
-    add_local_user
-    } '9' {
-    remove_local_user
-    } '10' {
-    browser
-    } '11' {
-    gpupdate
-    } '12' {
-    reboot
-    } 'q' {
+    switch ($selection) {
+        '1' {
+            update_noreboot
+        } '2' {
+            update_reboot
+        } '3' {
+            bluescreen
+        } '4' {
+            remove_old_profiles
+        } '5' {
+            check_system_integrity
+        } '6' {
+            disbale_hwa
+        } '7' {
+            dont_sleep_when_lid_closed
+        } '8' {
+            add_local_user
+        } '9' {
+            gpupdate
+        } '10' {
+            browser
+        } '11' {
+            reboot
+        } 'q' {
+            break
+        }
+        default {
+            Write-Host "Invalid selection. Please try again."
+        }
     }
+    if ($selection -ne 'q') {
+        Write-Host "Press any key to continue..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        Write-Host ""
     }
-    pause
- }
- until ($selection -eq 'q')
+} while ($selection -ne 'q')
