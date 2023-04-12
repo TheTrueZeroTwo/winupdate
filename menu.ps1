@@ -52,7 +52,7 @@ function print_test{
 function browser{
     # download and run sea monkey portable
     Write-Host "Downloading and running Sea Monkey Portable"
-    Download-File -Url "https://www.seamonkey-project.org/releases/seamonkey2.53.5.win32.installer.exe" -Destination "C:\Intel\seamonkey2.53.5.win32.installer.exe"
+    Download-File -Url "https://download2.portableapps.com/portableapps/SeaMonkeyPortable/SeaMonkeyPortable_2.53.16_English.paf.exe" -Destination "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
     Start-Process "C:\Intel\seamonkey2.53.5.win32.installer.exe"
 }
 
@@ -67,6 +67,22 @@ function add_local_user{
     New-LocalUser -Name $username -Password $password -logonpasswordchange:$true -PasswordNeverExpires:$true -AccountNeverExpires:$true -FullName $fullname
 }
 
+function remove_local_user{
+    # display local users and select one to remove
+    Write-Host "Removing local user"
+    $users = Get-LocalUser
+    $users | Format-Table -Property Name, FullName
+    $user = Read-Host "Enter username to remove"
+    $userToRemove = $users | Where-Object { $_.Name -eq $user }
+    if($userToRemove){
+        Remove-LocalUser -Name $userToRemove.Name
+        Write-Host "User $($userToRemove.Name) has been removed."
+    }else{
+        Write-Host "User $($user) was not found."
+    }
+}
+
+
 function dont_sleep_when_lid_closed{
     # don't sleep when lid is closed
     Write-Host "Disabling sleep when lid is closed"
@@ -77,7 +93,6 @@ function dont_sleep_when_lid_closed{
 
 function gpupdate{
     # update group policy
-    Write-Host "Updating group policy"
     gpupdate /force
 }
 function disbale_hwa{
@@ -121,9 +136,9 @@ function check_system_integrity{
 
 function remove_old_profiles{
     <#
-    removes profiles that are older than 30 days
+    removes profiles that are older than 30 days, excluding the Administrator profile
     #>
-    $profiles = Get-ChildItem -Path "C:\Users" -Directory
+    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" }
     $profiles | ForEach-Object {
         $profile = $_
         $profile_age = (Get-Date) - $profile.CreationTime
@@ -134,48 +149,46 @@ function remove_old_profiles{
     }
 }
 
+
 function reboot{
     # reboot
     Write-Host "Rebooting"
     Restart-Computer -Force
 }
 
-do {
+do
+ {
     Show-Menu
     $selection = Read-Host "Please make a selection"
-    switch ($selection) {
-        '1' {
-            update_noreboot
-        } '2' {
-            update_reboot
-        } '3' {
-            bluescreen
-        } '4' {
-            remove_old_profiles
-        } '5' {
-            check_system_integrity
-        } '6' {
-            disbale_hwa
-        } '7' {
-            dont_sleep_when_lid_closed
-        } '8' {
-            add_local_user
-        } '9' {
-            gpupdate
-        } '10' {
-            browser
-        } '11' {
-            reboot
-        } 'q' {
-            break
-        }
-        default {
-            Write-Host "Invalid selection. Please try again."
-        }
+    switch ($selection)
+    {
+    '1' {
+    update_noreboot
+    } '2' {
+    update_reboot
+    } '3' {
+    bluescreen
+    } '4' {
+    remove_old_profiles
+    } '5' {
+    check_system_integrity
+    } '6' {
+    disbale_hwa
+    } '7' {
+    dont_sleep_when_lid_closed
+    } '8' {
+    add_local_user
+    } '9' {
+    remove_local_user
+    } '10' {
+    browser
+    } '11' {
+    gpupdate
+    } '12' {
+    reboot
+    } 'q' {
     }
-    if ($selection -ne 'q') {
-        Write-Host "Press any key to continue..."
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        Write-Host ""
     }
-} while ($selection -ne 'q')
+    pause
+ }
+ until ($selection -eq 'q')
