@@ -170,7 +170,7 @@ do
     reboot
     } 'q' {
     }
-    pause
     }
+    pause
  }
  until ($selection -eq 'q')
