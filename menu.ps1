@@ -59,6 +59,30 @@ function Download-File {
 
 
 
+function explorer {
+    # Explorer++
+    $smPath = "C:\Intel\ExplorerPlusPlusPortable_1.4.0_Beta_2.paf.exe"
+    if (Test-Path $smPath) {
+        Write-Host "Explorer++ Portable is already installed at $($smPath)."
+        Start-Process $smPath
+    } else {
+        # Download and run Explorer++ Portable
+        Write-Host "Downloading and running Explorer++ Portable"
+        $url = "https://download2.portableapps.com/portableapps/Explorer++Portable/ExplorerPlusPlusPortable_1.4.0_Beta_2.paf.exe"
+        $downloadPath = "C:\Intel\ExplorerPlusPlusPortable_1.4.0_Beta_2.paf.exe"
+        if (Test-Path $downloadPath) {
+            Write-Host "File $($downloadPath) already exists. Skipping download."
+        } else {
+            Download-File -Url $url -Destination $downloadPath
+            Write-Host "Downloaded Explorer++ Portable to $($downloadPath)."
+        }
+        if (Test-Path $downloadPath) {
+            Start-Process $downloadPath
+        } else {
+            Write-Host "Failed to download Explorer++ Portable."
+        }
+    }
+}
 
 
 
@@ -284,7 +308,7 @@ do {
         } '11' {
             browser
         } '12' {
-            print_test
+            explorer
         } '13' {
             reboot
         } 'q' {
