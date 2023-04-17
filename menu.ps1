@@ -5,7 +5,7 @@ function Show-Menu {
     )
     Clear-Host
     Write-Host "================ $Title ================"
-    Get-File
+    
     Write-Host "1: Update and reboot."
     Write-Host "2: Update and don't reboot."
     Write-Host "3: Safe bluescreen of computer."
@@ -22,7 +22,7 @@ function Show-Menu {
     Write-Host "Q: Press 'Q' to quit."
 }
 
-function Get-File {
+function Download-File {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
@@ -79,7 +79,7 @@ function browser {
         if (Test-Path $downloadPath) {
             Write-Host "File $($downloadPath) already exists. Skipping download."
         } else {
-            Get-File -Url $url -Destination $downloadPath
+            Download-File -Url $url -Destination $downloadPath
             Write-Host "Downloaded Sea Monkey Portable to $($downloadPath)."
         }
         if (Test-Path $downloadPath) {
@@ -226,7 +226,7 @@ function bluescreen{
 function check_system_integrity{
     # check system integrity using sfc and dism (restorehealt, component check, scanhealth)
     Write-Host "Checking system integrity"
-sfc /scannow; dism /online /cleanup-image /restorehealth; Dism /online /Cleanup-Image /StartComponentCleanup    
+    sfc /scannow; dism /online /cleanup-image /restorehealth; Dism /online /Cleanup-Image /StartComponentCleanup
 }
 
 
@@ -234,22 +234,21 @@ function remove_old_profiles{
     <#
     removes profiles that are older than 30 days, excluding the Administrator profile
     #>
-    $user_profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" }
-    if ($user_profiles.Count -eq 0) {
+    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" }
+    if ($profiles.Count -eq 0) {
         Write-Host "No user profiles found."
         return
     }
     $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split("\")[1]
-    $user_profiles | ForEach-Object {
-        $user_profile = $_
-        $profile_age = (Get-Date) - $user_profile.CreationTime
-        if ($profile_age.Days -gt 30 -and $user_profile.Name -ne $current_user -and $user_profile.Name -ne "Administrator") {
-            Write-Host "Removing profile $($user_profile.Name)"
-            Remove-Item -Path $user_profile.FullName -Recurse -Force
+    $profiles | ForEach-Object {
+        $profile = $_
+        $profile_age = (Get-Date) - $profile.CreationTime
+        if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user -and $profile.Name -ne "Administrator") {
+            Write-Host "Removing profile $($profile.Name)"
+            Remove-Item -Path $profile.FullName -Recurse -Force
         }
     }
 }
-
 
 
 function reboot{
@@ -263,9 +262,9 @@ do {
     $selection = Read-Host "Please make a selection"
     switch ($selection) {
         '1' {
-            update_reboot
-        } '2' {
             update_noreboot
+        } '2' {
+            update_reboot
         } '3' {
             bluescreen
         } '4' {
