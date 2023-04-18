@@ -6,8 +6,8 @@ function Show-Menu {
     Clear-Host
     Write-Host "================ $Title ================"
     
-    Write-Host "1: Update and reboot."
-    Write-Host "2: Update and don't reboot."
+    Write-Host "1: Update and don't reboot."
+    Write-Host "2: Update and reboot."
     Write-Host "3: Safe bluescreen of computer."
     Write-Host "4: Remove old profiles."
     Write-Host "5: Check system integrity."
