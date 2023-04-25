@@ -6,8 +6,8 @@ function Show-Menu {
     Clear-Host
     Write-Host "================ $Title ================"
     
-    Write-Host "1: Update and don't reboot."
-    Write-Host "2: Update and reboot."
+    Write-Host "1: Update and reboot."
+    Write-Host "2: Update and don't reboot."
     Write-Host "3: Safe bluescreen of computer."
     Write-Host "4: Remove old profiles."
     Write-Host "5: Check system integrity."
@@ -186,8 +186,10 @@ function dont_sleep_when_lid_closed{
     # don't sleep when lid is closed
     Write-Host "Disabling sleep when lid is closed"
     powercfg /change -monitor-timeout-ac 0
+    powercfg /change -monitor-timeout-dc 0
     powercfg -SETACVALUEINDEX 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
     powercfg -SETDCVALUEINDEX 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
+    Write-Host "Sleep when lid is closed has been disabled"
 }
 
 function gpupdate {
