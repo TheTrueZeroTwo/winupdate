@@ -255,12 +255,18 @@ function check_system_integrity{
     sfc /scannow; dism /online /cleanup-image /restorehealth; Dism /online /Cleanup-Image /StartComponentCleanup
 }
 
-
 function remove_old_profiles {
     <#
-    removes profiles that are older than 30 days, excluding the current user and any profile with "admin" in the name
+    removes profiles that are older than 30 days, excluding the current user and any default Microsoft accounts, as well as any profile with "admin" in the name
     #>
-    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" -and $_.Name -notlike "*admin*" }
+    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object {
+        $_.Name -ne "Administrator" -and
+        $_.Name -notlike "*admin*" -and
+        $_.Name -ne "All Users" -and
+        $_.Name -ne "Default" -and
+        $_.Name -ne "Default User" -and
+        $_.Name -ne "Public"
+    }
     if ($profiles.Count -eq 0) {
         Write-Host "No user profiles found."
         return
