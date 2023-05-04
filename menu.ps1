@@ -6,8 +6,8 @@ function Show-Menu {
     Clear-Host
     Write-Host "================ $Title ================"
     
-    Write-Host "1: Update and reboot."
-    Write-Host "2: Update and don't reboot."
+    Write-Host "1: Update and don't reboot."
+    Write-Host "2: Update and reboot."
     Write-Host "3: Safe bluescreen of computer."
     Write-Host "4: Remove old profiles."
     Write-Host "5: Check system integrity."
@@ -256,11 +256,11 @@ function check_system_integrity{
 }
 
 
-function remove_old_profiles{
+function remove_old_profiles {
     <#
-    removes profiles that are older than 30 days, excluding the Administrator profile
+    removes profiles that are older than 30 days, excluding the current user and any profile with "admin" in the name
     #>
-    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" }
+    $profiles = Get-ChildItem -Path "C:\Users" -Directory | Where-Object { $_.Name -ne "Administrator" -and $_.Name -notlike "*admin*" }
     if ($profiles.Count -eq 0) {
         Write-Host "No user profiles found."
         return
@@ -269,7 +269,7 @@ function remove_old_profiles{
     $profiles | ForEach-Object {
         $profile = $_
         $profile_age = (Get-Date) - $profile.CreationTime
-        if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user -and $profile.Name -ne "Administrator") {
+        if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user) {
             Write-Host "Removing profile $($profile.Name)"
             Remove-Item -Path $profile.FullName -Recurse -Force
         }
