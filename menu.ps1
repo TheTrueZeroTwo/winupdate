@@ -51,6 +51,48 @@ function Download-File {
     }
 }
 
+
+
+function Restart-VPNServices {
+    # Restart all OpenVPN services
+    $openVpnServices = Get-Service | Where-Object { $_.DisplayName -like "OpenVPN*" }
+    foreach ($service in $openVpnServices) {
+        try {
+            Write-Host "Restarting OpenVPN service: $($service.DisplayName)..."
+            Restart-Service -InputObject $service
+            Write-Host "OpenVPN service $($service.DisplayName) restarted successfully."
+        } catch {
+            Write-Error "Failed to restart OpenVPN service $($service.DisplayName): $($_.Exception.Message)"
+        }
+    }
+
+    # Delete all Mini WAN devices
+    $miniWanDevices = Get-WmiObject -Class Win32_PnPEntity | Where-Object { $_.Description -like "*Mini WAN*" }
+    foreach ($device in $miniWanDevices) {
+        try {
+            Write-Host "Deleting Mini WAN device: $($device.Description)..."
+            $device.Uninstall()
+            Write-Host "Mini WAN device $($device.Description) deleted successfully."
+        } catch {
+            Write-Error "Failed to delete Mini WAN device $($device.Description): $($_.Exception.Message)"
+        }
+    }
+
+    # Restart WireGuard if found
+    $wireGuardService = Get-Service -Name "WireGuardTunnel$*"
+    if ($wireGuardService -ne $null) {
+        try {
+            Write-Host "Restarting WireGuard service: $($wireGuardService.DisplayName)..."
+            Restart-Service -InputObject $wireGuardService
+            Write-Host "WireGuard service $($wireGuardService.DisplayName) restarted successfully."
+        } catch {
+            Write-Error "Failed to restart WireGuard service $($wireGuardService.DisplayName): $($_.Exception.Message)"
+        }
+    }
+}
+
+
+
 function Remove-NonDefaultPrintersAndDrivers {
     <#
     Removes non-default printers and their drivers using the PrintManagement module.
