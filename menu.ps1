@@ -1,26 +1,20 @@
-
 function Show-Menu {
     param (
         [string]$Title = 'Menu'
     )
     Clear-Host
     Write-Host "================ $Title ================"
-    
-    Write-Host "1: Update and don't reboot."
-    Write-Host "2: Update and reboot."
-    Write-Host "3: Safe bluescreen of computer."
-    Write-Host "4: Remove old profiles."
-    Write-Host "5: Check system integrity."
-    Write-Host "6: Disable hardware acceleration for browsers."
-    Write-Host "7: Disable sleep when lid is closed."
-    Write-Host "8: Add local user."
-    Write-Host "9: Remove local user."
-    Write-Host "10: GPUpdate."
-    Write-Host "11: Download and run Sea Monkey Portable."
-    Write-Host "12: Test."
-    Write-Host "13: Reboot."
+
+    # Get all function names in the script
+    $functionNames = Get-Command -Type Function | Select-Object -ExpandProperty Name
+
+    for ($i = 0; $i -lt $functionNames.Count; $i++) {
+        Write-Host "$($i+1): $($functionNames[$i])"
+    }
+
     Write-Host "Q: Press 'Q' to quit."
 }
+
 
 function Download-File {
     [CmdletBinding()]
