@@ -432,8 +432,9 @@ function reboot{
 
 #Keep this at the bottom of the script
 
-# Get all function names in the script
-$functionNames = Get-Command -Type Function | Select-Object -ExpandProperty Name
+# Get the functions defined in the current script
+$scriptPath = $PSScriptRoot
+$functionNames = Get-Command -Type Function -Module (Get-Module -ListAvailable -Name $scriptPath).Name | Select-Object -ExpandProperty Name
 
 do {
     Clear-Host
