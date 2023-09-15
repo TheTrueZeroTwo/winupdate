@@ -435,15 +435,17 @@ function reboot{
 
 
 
-# Get the functions defined in the current script
-$scriptPath = $MyInvocation.MyCommand.Module.ModuleBase
-$functionNames = Get-Command -Type Function | Where-Object { $_.ScriptBlock.File -eq $scriptPath } | Select-Object -ExpandProperty Name
+# Get the content of the current script
+$currentScriptContent = Get-Content -Path $MyInvocation.MyCommand.ScriptBlock.File -Raw
+
+# Use regex to find all function definitions in the script
+$functionNames = [Regex]::Matches($currentScriptContent, 'function\s+([A-Za-z0-9-_]+)\s*{') | ForEach-Object { $_.Groups[1].Value }
 
 do {
     Clear-Host
     Write-Host "Menu:"
-    $functionNames | ForEach-Object {
-        Write-Host "$_"
+    for ($i = 0; $i -lt $functionNames.Count; $i++) {
+        Write-Host "$($i+1). $($functionNames[$i])"
     }
     Write-Host "q. Quit"
 
@@ -451,11 +453,12 @@ do {
     if ($selection -eq 'q') {
         break
     }
-    if ($functionNames -contains $selection) {
-        Write-Host "You selected: $selection"
+    if ($selection -ge 1 -and $selection -le $functionNames.Count) {
+        $selectedFunction = $functionNames[$selection - 1]
+        Write-Host "You selected: $selectedFunction"
         
         # Call the selected function
-        & $selection
+        & $selectedFunction
     }
     else {
         Write-Host "Invalid selection. Please try again."
@@ -465,6 +468,7 @@ do {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host ""
 } while ($true)
+
 
 
 
