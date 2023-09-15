@@ -14,7 +14,7 @@ function Show-Menu {
     for ($i = 0; $i -lt $functionNames.Count; $i++) {
         Write-Host "$($i+1): $($functionNames[$i])"
     }
-
+    Write-Host "v2"
     Write-Host "Q: Press 'Q' to quit."
 }
 
