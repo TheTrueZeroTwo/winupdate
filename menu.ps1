@@ -433,41 +433,58 @@ function reboot{
 #Keep this at the bottom of the script
 
 
-
-
-# Get the content of the current script
-$currentScriptContent = Get-Content -Path $MyInvocation.MyCommand.ScriptBlock.File -Raw
-
-# Use regex to find all function definitions in the script
-$functionNames = [Regex]::Matches($currentScriptContent, 'function\s+([A-Za-z0-9-_]+)\s*{') | ForEach-Object { $_.Groups[1].Value }
+# Specify the functions you want to include in the menu
+$functionList = @(
+    "Update and don't reboot",
+    "Update and reboot",
+    "Safe bluescreen of computer",
+    "Remove old profiles",
+    "Check system integrity",
+    "Disable hardware acceleration for browsers",
+    "Disable sleep when lid is closed",
+    "Add local user",
+    "Remove local user",
+    "GPUpdate",
+    "Download and run Sea Monkey Portable",
+    "Test",
+    "Reboot",
+    "Remove-NonDefaultPrintersAndDrivers"
+)
 
 do {
     Clear-Host
     Write-Host "Menu:"
-    for ($i = 0; $i -lt $functionNames.Count; $i++) {
-        Write-Host "$($i+1). $($functionNames[$i])"
+    
+    # Display the list of functions
+    for ($i = 0; $i -lt $functionList.Count; $i++) {
+        Write-Host "$($i+1): $($functionList[$i])"
     }
+    
     Write-Host "q. Quit"
-
+    
     $selection = Read-Host "Please make a selection"
+    
     if ($selection -eq 'q') {
         break
     }
-    if ($selection -ge 1 -and $selection -le $functionNames.Count) {
-        $selectedFunction = $functionNames[$selection - 1]
+    
+    # Check if the selection is within the valid range
+    if ($selection -ge 1 -and $selection -le $functionList.Count) {
+        $selectedFunction = $functionList[$selection - 1]
         Write-Host "You selected: $selectedFunction"
         
-        # Call the selected function
-        & $selectedFunction
+        # Execute the selected function
+        Invoke-Expression "& `$selectedFunction"
     }
     else {
         Write-Host "Invalid selection. Please try again."
     }
-
+    
     Write-Host "Press any key to continue..."
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host ""
 } while ($true)
+
 
 
 
