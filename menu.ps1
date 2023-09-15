@@ -432,15 +432,11 @@ function reboot{
 
 #Keep this at the bottom of the script
 
-# Get the functions defined in the current script
-$scriptPath = $MyInvocation.MyCommand.Module.ModuleBase
-$functionNames = Get-Command -Type Function | Where-Object { $_.ScriptBlock.File -eq $scriptPath } | Select-Object -ExpandProperty Name
-
 do {
     Clear-Host
     Write-Host "Menu:"
-    for ($i = 0; $i -lt $functionNames.Count; $i++) {
-        Write-Host "$($i+1). $($functionNames[$i])"
+    $functionNames | ForEach-Object {
+        Write-Host "$_"
     }
     Write-Host "q. Quit"
 
@@ -448,12 +444,11 @@ do {
     if ($selection -eq 'q') {
         break
     }
-    if ($selection -ge 1 -and $selection -le $functionNames.Count) {
-        $selectedFunction = $functionNames[$selection - 1]
-        Write-Host "You selected: $selectedFunction"
+    if ($functionNames -contains $selection) {
+        Write-Host "You selected: $selection"
         
         # Call the selected function
-        & $selectedFunction
+        & $selection
     }
     else {
         Write-Host "Invalid selection. Please try again."
