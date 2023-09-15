@@ -388,29 +388,33 @@ function remove_old_profiles {
             $_.Name -ne "Administrator" -and
             $_.Name -notlike "*admin*" -and
             $_.Name -ne "All Users" -and
-            $_.Name -ne "Default" -
-        $_.Name -ne "Default User" -and
-        $_.Name -ne "Public"
-    }
-    if ($profiles.Count -eq 0) {
-        Write-Host "No user profiles found."
-        return
-    }
-    $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split("\")[1]
-    $profiles | ForEach-Object {
-        $profile = $_
-        $profile_age = (Get-Date) - $profile.CreationTime
-        if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user) {
-            try {
-                Write-Host "Removing profile $($profile.Name)"
-                Remove-Item -Path $profile.FullName -Recurse -Force
-                Write-Host "Profile $($profile.Name) has been removed."
-            } catch {
-                Write-Error "Failed to remove profile $($profile.Name): $($_.Exception.Message)"
+            $_.Name -ne "Default" -and
+            $_.Name -ne "Default User" -and
+            $_.Name -ne "Public"
+        }
+        if ($profiles.Count -eq 0) {
+            Write-Host "No user profiles found."
+            return
+        }
+        $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split("\")[1]
+        $profiles | ForEach-Object {
+            $profile = $_
+            $profile_age = (Get-Date) - $profile.CreationTime
+            if ($profile_age.Days -gt 30 -and $profile.Name -ne $current_user) {
+                try {
+                    Write-Host "Removing profile $($profile.Name)"
+                    Remove-Item -Path $profile.FullName -Recurse -Force
+                    Write-Host "Profile $($profile.Name) has been removed."
+                } catch {
+                    Write-Error "Failed to remove profile $($profile.Name): $($_.Exception.Message)"
+                }
             }
         }
+    } catch {
+        Write-Error "An error occurred while enumerating profiles: $($_.Exception.Message)"
     }
 }
+
 
 function reboot{
     # reboot
