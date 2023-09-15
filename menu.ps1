@@ -1,22 +1,22 @@
-function Show-Menu {
-    param (
-        [string]$Title = 'Menu'
-    )
-    Clear-Host
-    Write-Host "================ $Title ================"
-
-    # Get the content of the current script
-    $currentScriptContent = Get-Content -Path $MyInvocation.MyCommand.ScriptBlock.File -Raw
-
-    # Use regex to find all function definitions in the script
-    $functionNames = [Regex]::Matches($currentScriptContent, 'function\s+([A-Za-z0-9-_]+)\s*{') | ForEach-Object { $_.Groups[1].Value }
-
-    for ($i = 0; $i -lt $functionNames.Count; $i++) {
-        Write-Host "$($i+1): $($functionNames[$i])"
-    }
-    Write-Host "v2"
-    Write-Host "Q: Press 'Q' to quit."
-}
+#function Show-Menu {
+#    param (
+#        [string]$Title = 'Menu'
+#    )
+#    Clear-Host
+#    Write-Host "================ $Title ================"
+#
+#    # Get the content of the current script
+#    $currentScriptContent = Get-Content -Path $MyInvocation.MyCommand.ScriptBlock.File -Raw
+#
+#    # Use regex to find all function definitions in the script
+#    $functionNames = [Regex]::Matches($currentScriptContent, 'function\s+([A-Za-z0-9-_]+)\s*{') | ForEach-Object { $_.Groups[1].Value }
+#
+#    for ($i = 0; $i -lt $functionNames.Count; $i++) {
+#        Write-Host "$($i+1): $($functionNames[$i])"
+#    }
+#    Write-Host "v2"
+#    Write-Host "Q: Press 'Q' to quit."
+#}
 
 
 
