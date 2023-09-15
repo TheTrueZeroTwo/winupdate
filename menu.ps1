@@ -432,6 +432,13 @@ function reboot{
 
 #Keep this at the bottom of the script
 
+
+
+
+# Get the functions defined in the current script
+$scriptPath = $MyInvocation.MyCommand.Module.ModuleBase
+$functionNames = Get-Command -Type Function | Where-Object { $_.ScriptBlock.File -eq $scriptPath } | Select-Object -ExpandProperty Name
+
 do {
     Clear-Host
     Write-Host "Menu:"
