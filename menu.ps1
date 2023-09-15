@@ -432,9 +432,8 @@ function reboot{
 
 #Keep this at the bottom of the script
 
-# Get the functions defined in the current script
-$scriptPath = $MyInvocation.MyCommand.Module.ModuleBase
-$functionNames = Get-Command -Type Function | Where-Object { $_.Source -eq $scriptPath } | Select-Object -ExpandProperty Name
+# Get the functions defined in the script
+$functionNames = Get-Command -Type Function | Where-Object { $_.Module -eq $MyInvocation.MyCommand.Module } | Select-Object -ExpandProperty Name
 
 do {
     Clear-Host
@@ -463,4 +462,5 @@ do {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host ""
 } while ($true)
+
 
