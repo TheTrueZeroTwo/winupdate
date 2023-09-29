@@ -447,18 +447,18 @@ function reboot{
 
 # Specify the functions you want to include in the menu
 $functionList = @(
-    "Update and don't reboot",
-    "Update and reboot",
-    "Safe bluescreen of computer",
+    "update_noreboot",
+    "update_reboot",
+    "bluescreen",
     "dickcheck",
-    "Remove old profiles",
-    "Check system integrity",
-    "Disable hardware acceleration for browsers",
-    "Disable sleep when lid is closed",
-    "Add local user",
-    "Remove local user",
+    "remove_old_profiles",
+    "check_system_integrity",
+    "disable_hwa",
+    "dont_sleep_when_lid_closed",
+    "add_local_user",
+    "remove_local_user",
     "GPUpdate",
-    "Download and run Sea Monkey Portable",
+    "browser",
     "Test",
     "Reboot",
     "Remove-NonDefaultPrintersAndDrivers"
