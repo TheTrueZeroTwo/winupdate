@@ -369,7 +369,7 @@ function update_noreboot{
     # update and don't reboot
     Write-Host "Updating and not rebooting"
     try {
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-noreboot.ps1')
+        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-noreboot.ps1')}
     } catch {
         Write-Error "Failed to update and not reboot: $($_.Exception.Message)"
     }
@@ -450,6 +450,7 @@ $functionList = @(
     "Update and don't reboot",
     "Update and reboot",
     "Safe bluescreen of computer",
+    "dickcheck",
     "Remove old profiles",
     "Check system integrity",
     "Disable hardware acceleration for browsers",
