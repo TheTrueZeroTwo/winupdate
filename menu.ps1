@@ -343,6 +343,18 @@ function disable_hwa {
     }
 }
 
+
+function dickcheck{
+    # check disk status
+    Write-Host "Checking disk status"
+    try {
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1')
+    } catch {
+        Write-Error "Failed to Check Disk: $($_.Exception.Message)"
+    }
+}
+
+
 function update_reboot{
     # update and reboot
     Write-Host "Updating and rebooting"
