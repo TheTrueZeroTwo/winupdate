@@ -348,7 +348,7 @@ function dickcheck{
     # check disk status
     Write-Host "Checking disk status"
     try {
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1')
+        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1')}
     } catch {
         Write-Error "Failed to Check Disk: $($_.Exception.Message)"
     }
@@ -359,7 +359,7 @@ function update_reboot{
     # update and reboot
     Write-Host "Updating and rebooting"
     try {
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-reboot.ps1')
+        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-reboot.ps1')}
     } catch {
         Write-Error "Failed to update and reboot: $($_.Exception.Message)"
     }
@@ -379,7 +379,7 @@ function bluescreen{
     # bluescreen
     Write-Host "Bluescreening"
     try {
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/peewpw/Invoke-BSOD/master/Invoke-BSOD.ps1')
+        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/peewpw/Invoke-BSOD/master/Invoke-BSOD.ps1')}
     } catch {
         Write-Error "Failed to bluescreen: $($_.Exception.Message)"
     }
@@ -459,6 +459,7 @@ $functionList = @(
     "remove_local_user",
     "GPUpdate",
     "browser",
+    "explorer",
     "Test",
     "Reboot",
     "Remove-NonDefaultPrintersAndDrivers"
@@ -487,7 +488,8 @@ do {
         Write-Host "You selected: $selectedFunction"
         
         # Execute the selected function
-        Invoke-Expression "& `$selectedFunction"
+        
+        "& `$selectedFunction"
     }
     else {
         Write-Host "Invalid selection. Please try again."
