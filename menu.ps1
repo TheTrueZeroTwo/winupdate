@@ -482,14 +482,13 @@ do {
         break
     }
     
-    # Check if the selection is within the valid range
-    if ($selection -ge 1 -and $selection -le $functionList.Count) {
+    # Check if the selection is a valid menu option
+    if ($selection -in '1'..'15') {  # Adjust the range based on the number of functions
         $selectedFunction = $functionList[$selection - 1]
         Write-Host "You selected: $selectedFunction"
         
         # Execute the selected function
-        
-        "& `$selectedFunction"
+        Invoke-Expression "& `$selectedFunction"
     }
     else {
         Write-Host "Invalid selection. Please try again."
@@ -499,8 +498,5 @@ do {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host ""
 } while ($true)
-
-
-
 
 
