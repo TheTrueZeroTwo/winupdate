@@ -467,7 +467,9 @@ $functionList = @(
 
 do {
     Clear-Host
-    Write-Host "Menu:"
+    Write-Host "             Menu               "
+    Write-Host "            V 0.52              "
+    Write-Host "================================"
     
     # Display the list of functions
     for ($i = 0; $i -lt $functionList.Count; $i++) {
