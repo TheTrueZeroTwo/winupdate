@@ -1,6 +1,11 @@
 # Set the default drive letter to "C"
 [string]$driveletter = "C"
 
+
+# Specify the directory path for the log file
+$directoryPath = "C:\Intel\DiskInfo"
+
+
 # Using the default drive letter, get the full device path
 # and extract the UUID using a surely sub-optimal regex
 [object]$fulldiskid = (Get-Partition | 
@@ -86,8 +91,6 @@ for ($i = 2; $i -lt $rawsmartdata.Length; $i++) {
 # Get the current timestamp
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-# Specify the directory path for the log file
-$directoryPath = "C:\Intel\DiskInfo"
 
 # Create the directory if it doesn't exist
 if (-not (Test-Path -Path $directoryPath -PathType Container)) {
