@@ -1,25 +1,3 @@
-#function Show-Menu {
-#    param (
-#        [string]$Title = 'Menu'
-#    )
-#    Clear-Host
-#    Write-Host "================ $Title ================"
-#
-#    # Get the content of the current script
-#    $currentScriptContent = Get-Content -Path $MyInvocation.MyCommand.ScriptBlock.File -Raw
-#
-#    # Use regex to find all function definitions in the script
-#    $functionNames = [Regex]::Matches($currentScriptContent, 'function\s+([A-Za-z0-9-_]+)\s*{') | ForEach-Object { $_.Groups[1].Value }
-#
-#    for ($i = 0; $i -lt $functionNames.Count; $i++) {
-#        Write-Host "$($i+1): $($functionNames[$i])"
-#    }
-#    Write-Host "v2"
-#    Write-Host "Q: Press 'Q' to quit."
-#}
-
-
-
 function Download-File {
     [CmdletBinding()]
     param(
@@ -84,7 +62,7 @@ function Restart-VPNServices {
 
     # Restart WireGuard if found
     $wireGuardService = Get-Service -Name "WireGuardTunnel$*"
-    if ($wireGuardService -ne $null) {
+    if ($null -ne $wireGuardService) {
         try {
             Write-Host "Restarting WireGuard service: $($wireGuardService.DisplayName)..."
             Restart-Service -InputObject $wireGuardService
@@ -178,7 +156,7 @@ function explorer {
 
 function browser {
     # Check if Sea Monkey Portable is already installed
-    $smPath = "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
+    $smPath = "C:\Intel\SeaMonkeyPortable.exe"
     if (Test-Path $smPath) {
         Write-Host "Sea Monkey Portable is already installed at $($smPath)."
         Start-Process $smPath
@@ -186,7 +164,7 @@ function browser {
         # Download and run Sea Monkey Portable
         Write-Host "Downloading and running Sea Monkey Portable"
         $url = "https://download2.portableapps.com/portableapps/SeaMonkeyPortable/SeaMonkeyPortable_2.53.16_English.paf.exe"
-        $downloadPath = "C:\Intel\SeaMonkeyPortable_2.53.16_English.paf.exe"
+        $downloadPath = "C:\Intel\SeaMonkeyPortable.exe"
         if (Test-Path $downloadPath) {
             Write-Host "File $($downloadPath) already exists. Skipping download."
         } else {
@@ -251,29 +229,37 @@ function remove_local_user {
     }
     $users | Format-Table -Property Name, FullName
     $user = Read-Host "Enter username to remove"
-    if ([string]::IsNullOrWhiteSpace($user)) {
-        Write-Host "User name cannot be empty."
-        return
-    }
-    $userToRemove = $users | Where-Object { $_.Name -eq $user }
-    if (!$userToRemove) {
-        Write-Host "User $($user) was not found."
-        return
-    }
-    if ($userToRemove.Enabled -eq $false) {
-        Write-Host "User $($userToRemove.Name) is disabled and cannot be removed."
-        return
-    }
-    $confirmation = Read-Host "Are you sure you want to remove user $($userToRemove.Name)? [Y/N]"
-    if ($confirmation.ToLower() -ne "y") {
-        Write-Host "User $($userToRemove.Name) was not removed."
-        return
-    }
-    try {
-        Remove-LocalUser -Name $userToRemove.Name
-        Write-Host "User $($userToRemove.Name) has been removed."
-    } catch {
-        Write-Error "Failed to remove user: $($_.Exception.Message)"
+    switch ($user) {
+        { [string]::IsNullOrWhiteSpace($_) } {
+            Write-Host "User name cannot be empty."
+            return
+        }
+        default {
+            $userToRemove = $users | Where-Object { $_.Name -eq $user }
+            if (!$userToRemove) {
+                Write-Host "User $($user) was not found."
+                return
+            }
+            if ($userToRemove.Enabled -eq $false) {
+                Write-Host "User $($userToRemove.Name) is disabled and cannot be removed."
+                return
+            }
+            $confirmation = Read-Host "Are you sure you want to remove user $($userToRemove.Name)? [Y/N]"
+            switch ($confirmation.ToLower()) {
+                "y" {
+                    try {
+                        Remove-LocalUser -Name $userToRemove.Name
+                        Write-Host "User $($userToRemove.Name) has been removed."
+                    } catch {
+                        Write-Error "Failed to remove user: $($_.Exception.Message)"
+                    }
+                }
+                default {
+                    Write-Host "User $($userToRemove.Name) was not removed."
+                    return
+                }
+            }
+        }
     }
 }
 
@@ -348,7 +334,7 @@ function dickcheck{
     # check disk status
     Write-Host "Checking disk status"
     try {
-        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1')}
+        Start-Process powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1')}
     } catch {
         Write-Error "Failed to Check Disk: $($_.Exception.Message)"
     }
@@ -359,7 +345,7 @@ function update_reboot{
     # update and reboot
     Write-Host "Updating and rebooting"
     try {
-        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-reboot.ps1')}
+        Start-Process powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-reboot.ps1')}
     } catch {
         Write-Error "Failed to update and reboot: $($_.Exception.Message)"
     }
@@ -369,17 +355,47 @@ function update_noreboot{
     # update and don't reboot
     Write-Host "Updating and not rebooting"
     try {
-        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-noreboot.ps1')}
+        Start-Process powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/update-noreboot.ps1')}
     } catch {
         Write-Error "Failed to update and not reboot: $($_.Exception.Message)"
     }
 }
 
+
+
+function restart_windows_updates {
+    # stop Windows update services
+    Write-Host "Stopping Windows update services"
+    try {
+        net stop wuauserv; net stop cryptSvc; net stop bits; net stop msiserver
+    } catch {
+        Write-Error "Failed to stop Windows update services: $($_.Exception.Message)"
+    }
+
+    # rename SoftwareDistribution and Catroot2 folders
+    Write-Host "Renaming SoftwareDistribution and Catroot2 folders"
+    try {
+        Rename-Item C:\Windows\SoftwareDistribution SoftwareDistribution.old; Rename-Item C:\Windows\System32\catroot2 Catroot2.old
+    } catch {
+        Write-Error "Failed to rename SoftwareDistribution and Catroot2 folders: $($_.Exception.Message)"
+    }
+
+    # start Windows update services
+    Write-Host "Starting Windows update services"
+    try {
+        net start wuauserv; net start cryptSvc; net start bits; net start msiserver
+    } catch {
+        Write-Error "Failed to start Windows update services: $($_.Exception.Message)"
+    }
+}
+
+
+
 function bluescreen{
     # bluescreen
     Write-Host "Bluescreening"
     try {
-        start powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/peewpw/Invoke-BSOD/master/Invoke-BSOD.ps1')}
+        Start-Process powershell -Verb RunAs -ArgumentList '-NoExit', '-Command', 'Invoke-Expression (New-Object System.Net.WebClient).DownloadString(''https://raw.githubusercontent.com/peewpw/Invoke-BSOD/master/Invoke-BSOD.ps1'')'
     } catch {
         Write-Error "Failed to bluescreen: $($_.Exception.Message)"
     }
@@ -389,7 +405,7 @@ function check_system_integrity{
     # check system integrity using sfc and dism (restorehealt, component check, scanhealth)
     Write-Host "Checking system integrity"
     try {
-        sfc /scannow; dism /online /cleanup-image /restorehealth; Dism /online /Cleanup-Image /StartComponentCleanup
+        sfc /scannow; DISM /Online /Cleanup-image /Restorehealth; DISM /Cleanup-Mountpoints; DISM /Online /Cleanup-Image /AnalyzeComponentStore; DISM /Online /Cleanup-Image /StartComponentCleanup;defrag /c /o
     } catch {
         Write-Error "Failed to check system integrity: $($_.Exception.Message)"
     }
@@ -467,8 +483,9 @@ $functionList = @(
 
 do {
     Clear-Host
+    Write-Host "================================"
     Write-Host "             Menu               "
-    Write-Host "            V 0.52              "
+    Write-Host "            V 0.53              "
     Write-Host "================================"
     
     # Display the list of functions
@@ -500,5 +517,3 @@ do {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host ""
 } while ($true)
-
-
