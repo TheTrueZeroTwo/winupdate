@@ -361,6 +361,15 @@ function update_noreboot{
     }
 }
 
+function Install-Winget{
+    # update and don't reboot
+    Write-Host "Installing Winget"
+    try {
+        Start-Process powershell {Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/Install-Winget.ps1')}
+    } catch {
+        Write-Error "Failed to Install winget: $($_.Exception.Message)"
+    }
+}
 
 
 function restart_windows_updates {
@@ -478,7 +487,8 @@ $functionList = @(
     "explorer",
     "Test",
     "Reboot",
-    "Remove-NonDefaultPrintersAndDrivers"
+    "Remove-NonDefaultPrintersAndDrivers",
+    "Install-Winget"
 )
 
 do {
