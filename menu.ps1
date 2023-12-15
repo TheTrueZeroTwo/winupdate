@@ -535,7 +535,8 @@ do {
     }
     
     # Check if the selection is a valid menu option
-    if ($selection -in '1'..'15') {  # Adjust the range based on the number of functions
+    [int]$selection = $selection  # Cast to integer
+    if ($selection -ge 1 -and $selection -le $functionList.Count) {
         $selectedFunction = $functionList[$selection - 1]
         Write-Host "You selected: $selectedFunction"
         
