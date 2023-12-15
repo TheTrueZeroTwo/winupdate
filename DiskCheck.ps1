@@ -1,14 +1,12 @@
 # Set the default drive letter to "C"
 [string]$driveletter = "C"
 
-# Prompt the user for a drive letter with a timeout
-$timeout = 15
-$host.UI.Write("Enter a drive letter (default is 'C', timeout in $timeout seconds): ")
-$driveletterInput = $host.UI.ReadLineAsSecureString($timeout * 1000)
+# Prompt the user for a drive letter
+$driveletterInput = Read-Host -Prompt "Enter a drive letter (default is 'C')"
 
 # If the user provided a drive letter, use it. Otherwise, use the default.
 if ($driveletterInput) {
-    $driveletter = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($driveletterInput))
+    $driveletter = $driveletterInput
 }
 
 Write-Host "Selected drive letter: $driveletter"
