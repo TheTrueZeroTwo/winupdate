@@ -1,16 +1,26 @@
 # Set the default drive letter to "C"
 [string]$driveletter = "C"
 
+# Prompt the user for a drive letter with a timeout
+$timeout = 15
+$host.UI.Write("Enter a drive letter (default is 'C', timeout in $timeout seconds): ")
+$driveletterInput = $host.UI.ReadLineAsSecureString($timeout * 1000)
 
-# Specify the directory path for the log file
+# If the user provided a drive letter, use it. Otherwise, use the default.
+if ($driveletterInput) {
+    $driveletter = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($driveletterInput))
+}
+
+Write-Host "Selected drive letter: $driveletter"
+
+# Specify the directory path for the log files
 $directoryPath = "C:\Intel\DiskInfo"
-
 
 # Using the default drive letter, get the full device path
 # and extract the UUID using a surely sub-optimal regex
 [object]$fulldiskid = (Get-Partition | 
-    Where DriveLetter -eq $driveletter | 
-    Select DiskId | 
+    Where-Object DriveLetter -eq $driveletter | 
+    Select-Object DiskId | 
     Select-String "(\\\\\?\\.*?#.*?#)(.*)(#{.*})"
 )
 
@@ -91,19 +101,22 @@ for ($i = 2; $i -lt $rawsmartdata.Length; $i++) {
 # Get the current timestamp
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-
 # Create the directory if it doesn't exist
 if (-not (Test-Path -Path $directoryPath -PathType Container)) {
     New-Item -Path $directoryPath -ItemType Directory
 }
 
-# Specify the file path for the log
-$outputPath = Join-Path -Path $directoryPath -ChildPath "Status.txt"
+# Specify the file paths for the logs
+$outputPath = Join-Path -Path $directoryPath -ChildPath "Drive-Status.txt"
+$lastOutputPath = Join-Path -Path $directoryPath -ChildPath "Last-Drive-Status.txt"
 
-# Create the log message with timestamp and write it to the file
+# Create the log message with timestamp and write it to the historical log file
 $logMessage = "$timestamp`r`n$driveStatus`r`n$flag`r`n$value`r`n$worst"
 $logMessage | Out-File -FilePath $outputPath -Encoding UTF8
 
+# Write the last status to the last status log file
+$logMessage | Out-File -FilePath $lastOutputPath -Encoding UTF8
+
 Write-Host "Drive Status: $driveStatus"
 Write-Host "Drive Status and additional information have been written to $outputPath"
-
+Write-Host "Last Drive Status and additional information have been written to $lastOutputPath"
