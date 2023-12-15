@@ -518,7 +518,7 @@ do {
     Clear-Host
     Write-Host "================================"
     Write-Host "             Menu               "
-    Write-Host "            V 0.53              "
+    Write-Host "            V 0.55              "
     Write-Host "================================"
     
     # Display the list of functions
