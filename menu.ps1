@@ -33,7 +33,29 @@ function Download-File {
     }
 }
 
+function DiskCheckTask {
+    param (
+        [string]$ScriptUrl = "https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/DiskCheck.ps1",
+        [string]$ScriptPath = "C:\Intel\Script\DiskCheck.ps1",
+        [string]$TaskName = "DiskCheckTask",
+        [string]$TaskAction = "powershell.exe",
+        [string]$TaskArgument = "-File $ScriptPath"
+    )
 
+    # Download the script from GitHub
+    Invoke-WebRequest -Uri $ScriptUrl -OutFile $ScriptPath
+
+    # Check if the scheduled task already exists
+    if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+        Write-Host "Scheduled task '$TaskName' already exists."
+    } else {
+        # Create a new scheduled task with an AtLogon trigger
+        $taskAction = New-ScheduledTaskAction -Execute $TaskAction -Argument $TaskArgument
+        $taskTrigger = New-ScheduledTaskTrigger -AtLogon
+        Register-ScheduledTask -Action $taskAction -Trigger $taskTrigger -TaskName $TaskName
+        Write-Host "Scheduled task '$TaskName' created successfully."
+    }
+}
 
 function Restart-VPNServices {
     # Restart all OpenVPN services
@@ -476,6 +498,7 @@ $functionList = @(
     "update_reboot",
     "bluescreen",
     "dickcheck",
+    "DiskCheckTask",
     "remove_old_profiles",
     "check_system_integrity",
     "disable_hwa",
