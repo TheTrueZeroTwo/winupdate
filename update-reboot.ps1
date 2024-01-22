@@ -17,7 +17,7 @@ function Update-WindowsWithWinget {
 
     if ($wingetInstalled -ne $null) {
         # If winget is available, use it to upgrade all packages
-        winget upgrade --all
+        winget upgrade --all --silent --accept-source-agreements --accept-package-agreements --disable-interactivity --Force
     } else {
         Write-Host "winget is not installed. Run the Update-WindowsWithPowerShell function instead."
     }
