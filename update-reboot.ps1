@@ -1,3 +1,9 @@
+If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+	Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+	Exit
+}
+
+
 # Function to update Windows using PowerShell commands
 function Update-WindowsWithPowerShell {
     Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
