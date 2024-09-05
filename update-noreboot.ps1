@@ -44,65 +44,14 @@ function Update-WindowsWithWinget {
 }
 
 Function Install-WinGet {
-    #Install the latest package from GitHub
-    [cmdletbinding(SupportsShouldProcess)]
-    [alias("iwg")]
-    [OutputType("None")]
-    [OutputType("Microsoft.Windows.Appx.PackageManager.Commands.AppxPackage")]
-    Param(
-        [Parameter(HelpMessage = "Display the AppxPackage after installation.")]
-        [switch]$Passthru
-    )
-
-    Write-Verbose "[$((Get-Date).TimeofDay)] Starting $($myinvocation.mycommand)"
-
-    if ($PSVersionTable.PSVersion.Major -eq 7) {
-        Write-Warning "This command does not work in PowerShell 7. You must install in Windows PowerShell."
-        return
-    }
-
-    # Test for requirement
-    $Requirement = Get-AppPackage "Microsoft.DesktopAppInstaller"
-    if (-Not $requirement) {
-        Write-Verbose "Installing Desktop App Installer requirement"
-        Try {
-            Add-AppxPackage -Path "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx" -ErrorAction Stop
-        }
-        Catch {
-            Throw $_
-        }
-    }
-
-    $uri = "https://api.github.com/repos/microsoft/winget-cli/releases"
-
-    Try {
-        Write-Verbose "[$((Get-Date).TimeofDay)] Getting information from $uri"
-        $get = Invoke-RestMethod -uri $uri -Method Get -ErrorAction stop
-
-        Write-Verbose "[$((Get-Date).TimeofDay)] Getting latest release"
-        $data = $get[0].assets | Where-Object name -Match 'msixbundle'
-
-        $appx = $data.browser_download_url
-        Write-Verbose "[$((Get-Date).TimeofDay)] $appx"
-        If ($pscmdlet.ShouldProcess($appx, "Downloading asset")) {
-            $file = Join-Path -path $env:temp -ChildPath $data.name
-
-            Write-Verbose "[$((Get-Date).TimeofDay)] Saving to $file"
-            Invoke-WebRequest -Uri $appx -UseBasicParsing -DisableKeepAlive -OutFile $file
-
-            Write-Verbose "[$((Get-Date).TimeofDay)] Adding Appx Package"
-            Add-AppxPackage -Path $file -ErrorAction Stop
-
-            if ($Passthru) {
-                Get-AppxPackage microsoft.desktopAppInstaller
-            }
-        }
-    }
-    Catch {
-        Write-Verbose "[$((Get-Date).TimeofDay)] There was an error."
-        Throw $_
-    }
-    Write-Verbose "[$((Get-Date).TimeofDay)] Ending $($myinvocation.mycommand)"
+	$progressPreference = 'silentlyContinue'
+	Write-Information "Downloading WinGet and its dependencies..."
+	Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+	Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx
+	Invoke-WebRequest -Uri https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx -OutFile Microsoft.UI.Xaml.2.8.x64.appx
+	Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx
+	Add-AppxPackage Microsoft.UI.Xaml.2.8.x64.appx
+	Add-AppxPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
 }
 
 
