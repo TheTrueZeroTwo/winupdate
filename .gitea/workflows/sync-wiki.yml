@@ -1,0 +1,134 @@
+name: Sync Gitea Wiki
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'README.md'
+      - '*.ps1'
+      - 'wiki/**'
+      - 'tools/**'
+      - '.gitea/workflows/sync-wiki.yml'
+  workflow_dispatch:
+
+jobs:
+  sync-wiki:
+    name: Rsync wiki pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync wiki folder to Gitea wiki repo
+        shell: bash
+        env:
+          # Runtime/client PowerShell still uses GitHub raw URLs only.
+          # These variables are only for CI/wiki sync.
+          WIKI_REPO_URL: https://gitthegit.zerotwo.tech/ZeroTwo/winupdate.wiki.git
+          WIKI_BRANCH: master
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+          WIKI_USER: ${{ secrets.WIKI_USER }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -d wiki ]; then
+            echo "Missing wiki/ source directory." >&2
+            exit 1
+          fi
+
+          if [ -z "${WIKI_TOKEN:-}" ]; then
+            cat >&2 <<'EOF'
+          WIKI_TOKEN is not set.
+
+          Add a repo secret named WIKI_TOKEN with write access to:
+          https://gitthegit.zerotwo.tech/ZeroTwo/winupdate.wiki.git
+          EOF
+            exit 1
+          fi
+
+          if [ -z "${WIKI_USER:-}" ]; then
+            cat >&2 <<'EOF'
+          WIKI_USER is not set.
+
+          WIKI_USER must be the Gitea username that owns the WIKI_TOKEN.
+          It is not the token name. For example, if the token was created by
+          the ZeroTwo account, WIKI_USER should be ZeroTwo.
+          EOF
+            exit 1
+          fi
+
+          if ! command -v rsync >/dev/null 2>&1; then
+            echo "rsync is not installed; installing it for this job."
+            if command -v sudo >/dev/null 2>&1; then
+              sudo apt-get update
+              sudo apt-get install -y rsync
+            else
+              apt-get update
+              apt-get install -y rsync
+            fi
+          fi
+
+          WIKI_URL="${WIKI_REPO_URL}"
+          WIKI_DIR="winupdate.wiki"
+          WIKI_BRANCH="${WIKI_BRANCH:-master}"
+          USERNAME="${WIKI_USER}"
+
+          case "$WIKI_URL" in
+            https://*)
+              AUTH_WIKI_URL="https://${USERNAME}:${WIKI_TOKEN}@${WIKI_URL#https://}"
+              ;;
+            http://*)
+              AUTH_WIKI_URL="http://${USERNAME}:${WIKI_TOKEN}@${WIKI_URL#http://}"
+              ;;
+            *)
+              echo "Unsupported wiki URL: $WIKI_URL" >&2
+              exit 1
+              ;;
+          esac
+
+          rm -rf "$WIKI_DIR"
+          initial_wiki_push=0
+
+          if git clone "$AUTH_WIKI_URL" "$WIKI_DIR"; then
+            echo "Cloned existing wiki repository."
+          else
+            cat >&2 <<EOF
+          Could not clone the wiki repository.
+
+          Continuing with first-time wiki initialization. If the final push also
+          fails, check that:
+            1. WIKI_USER is the Gitea username that owns WIKI_TOKEN, not the token name.
+            2. The token has repository write access to ZeroTwo/winupdate.
+            3. The repository wiki feature is enabled.
+            4. The URL is correct: $WIKI_URL
+          EOF
+            mkdir -p "$WIKI_DIR"
+            git -C "$WIKI_DIR" init
+            git -C "$WIKI_DIR" checkout -b "$WIKI_BRANCH"
+            git -C "$WIKI_DIR" remote add origin "$AUTH_WIKI_URL"
+            initial_wiki_push=1
+          fi
+
+          rsync -a --delete wiki/ "$WIKI_DIR"/
+
+          cd "$WIKI_DIR"
+          git config user.name "winupdate-wiki-bot"
+          git config user.email "winupdate-wiki-bot@local"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+
+          git commit -m "Update WinUpdate wiki pages"
+
+          if [ "$initial_wiki_push" = "1" ]; then
+            git push -u origin "HEAD:${WIKI_BRANCH}"
+          else
+            git push
+          fi

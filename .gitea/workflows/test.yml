@@ -1,0 +1,64 @@
+name: Test WinUpdate MSP Helper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  static-tests:
+    name: Static repository tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout public GitHub mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source
+          git clone --depth 1 https://github.com/TheTrueZeroTwo/winupdate.git source
+          cp -a source/. .
+          rm -rf source
+
+      - name: Run Python static tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/test_repository.py
+
+      - name: Install PowerShell if missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+            exit 0
+          fi
+
+          echo "PowerShell is missing; installing powershell package for AST/parser tests."
+          apt-get update
+          if apt-get install -y powershell; then
+            pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+            exit 0
+          fi
+
+          echo "Direct powershell install failed; adding Microsoft package repository and retrying."
+          apt-get install -y wget apt-transport-https software-properties-common gpg
+          . /etc/os-release
+          wget -q "https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
+          dpkg -i /tmp/packages-microsoft-prod.deb
+          rm -f /tmp/packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y powershell
+          pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+
+      - name: Run PowerShell parser tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pwsh -NoProfile -ExecutionPolicy Bypass -File tests/Test-Repository.ps1
