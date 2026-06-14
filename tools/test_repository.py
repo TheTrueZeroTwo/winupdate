@@ -92,6 +92,23 @@ def main() -> None:
         if script not in menu:
             fail(f'menu.ps1 does not reference {script}')
 
+    expected_menu_parameter_calls = [
+        "'1' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'Never' }",
+        "'2' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'IfNeeded' }",
+        "'3' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'Never'; IncludeWinget = $true; InstallWingetIfMissing = $true }",
+        "'4' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ SkipWindowsUpdate = $true; IncludeWinget = $true; InstallWingetIfMissing = $true }",
+        "'5' { Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -Parameters @{ Mode = 'Repair' }",
+    ]
+    for expected_call in expected_menu_parameter_calls:
+        if expected_call not in menu:
+            fail(f'menu is missing corrected named-parameter call: {expected_call}')
+
+    if "-ArgumentList @('-RebootMode'" in menu or "-ArgumentList @('-Mode'" in menu:
+        fail('menu options 1-5 must not pass named parameters through a string ArgumentList.')
+
+    if '[hashtable]$Parameters' not in common or 'ConvertTo-WumParameterHashtable' not in common:
+        fail('Common.ps1 must support hashtable parameter splatting and backward-compatible ArgumentList conversion.')
+
     install_task = read(ROOT / 'Install-Task.ps1')
     if '-EncodedCommand' not in install_task:
         fail('Install-Task.ps1 should register an encoded remote-run command, not local script files.')
@@ -99,6 +116,9 @@ def main() -> None:
         fail('Install-Task.ps1 does not register a scheduled task.')
     if 'https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main' not in install_task:
         fail('Install-Task.ps1 default base URL must be GitHub raw.')
+
+    if "Invoke-WumRemoteScript -Name '$scriptName' -Parameters $parametersExpr" not in install_task:
+        fail('Install-Task.ps1 scheduled payload must invoke remote scripts with -Parameters.')
 
     network = read(ROOT / 'Test-NetworkConnectivity.ps1')
     if 'Read-Host' not in network or 'Target' not in network:

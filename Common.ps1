@@ -138,13 +138,51 @@ function Get-WumWebText {
     }
 }
 
+function ConvertTo-WumParameterHashtable {
+    param([object[]]$ArgumentList = @())
+
+    $parameters = @{}
+    for ($index = 0; $index -lt $ArgumentList.Count; $index++) {
+        $token = $ArgumentList[$index]
+        if (-not ($token -is [string]) -or $token -notmatch '^-([A-Za-z][A-Za-z0-9_-]*)$') {
+            throw "Unsupported positional remote-script argument at index ${index}: $token. Use named parameters."
+        }
+
+        $name = $Matches[1]
+        $hasValue = $false
+        $value = $true
+
+        if (($index + 1) -lt $ArgumentList.Count) {
+            $next = $ArgumentList[$index + 1]
+            if (-not (($next -is [string]) -and $next -match '^-([A-Za-z][A-Za-z0-9_-]*)$')) {
+                $value = $next
+                $hasValue = $true
+            }
+        }
+
+        $parameters[$name] = $value
+        if ($hasValue) { $index++ }
+    }
+
+    return $parameters
+}
+
 function Invoke-WumRemoteScript {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateSet('Invoke-WinUpdate.ps1','Install-Winget.ps1','DiskCheck.ps1','Get-SystemSnapshot.ps1','Get-EventSummary.ps1','Get-NetworkInfo.ps1','Repair-Windows.ps1','Install-Task.ps1','Test-NetworkConnectivity.ps1','menu.ps1')]
         [string]$Name,
+
+        [hashtable]$Parameters = @{},
+
+        # Backward compatibility for older menu/task calls. Named tokens are
+        # converted to a hashtable before invoking the remote script.
         [object[]]$ArgumentList = @()
     )
+
+    if ($Parameters.Count -gt 0 -and $ArgumentList.Count -gt 0) {
+        throw 'Use either -Parameters or -ArgumentList, not both.'
+    }
 
     $baseUrl = Get-WumBaseUrl
     $url = "$baseUrl/$Name"
@@ -154,8 +192,21 @@ function Invoke-WumRemoteScript {
     if ([string]::IsNullOrWhiteSpace($code)) {
         throw "Remote script was empty: $url"
     }
+
     $scriptBlock = [ScriptBlock]::Create($code)
-    & $scriptBlock @ArgumentList
+
+    if ($Parameters.Count -gt 0) {
+        & $scriptBlock @Parameters
+        return
+    }
+
+    if ($ArgumentList.Count -gt 0) {
+        $convertedParameters = ConvertTo-WumParameterHashtable -ArgumentList $ArgumentList
+        & $scriptBlock @convertedParameters
+        return
+    }
+
+    & $scriptBlock
 }
 
 function Invoke-WumNativeCommand {

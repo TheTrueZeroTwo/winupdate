@@ -37,32 +37,32 @@ function Get-WumScheduledPayload {
     )
 
     $scriptName = $null
-    $argsExpr = '@()'
+    $parametersExpr = '@{}'
 
     switch ($TaskAction) {
         'UpdateNoReboot' {
             $scriptName = 'Invoke-WinUpdate.ps1'
-            $argsExpr = "@('-RebootMode','Never')"
+            $parametersExpr = "@{ RebootMode = 'Never' }"
         }
         'UpdateIfNeeded' {
             $scriptName = 'Invoke-WinUpdate.ps1'
-            $argsExpr = "@('-RebootMode','IfNeeded')"
+            $parametersExpr = "@{ RebootMode = 'IfNeeded' }"
         }
         'UpdateWithWingetNoReboot' {
             $scriptName = 'Invoke-WinUpdate.ps1'
-            $argsExpr = "@('-RebootMode','Never','-IncludeWinget','-InstallWingetIfMissing')"
+            $parametersExpr = "@{ RebootMode = 'Never'; IncludeWinget = `$true; InstallWingetIfMissing = `$true }"
         }
         'WingetOnly' {
             $scriptName = 'Invoke-WinUpdate.ps1'
-            $argsExpr = "@('-SkipWindowsUpdate','-IncludeWinget','-InstallWingetIfMissing')"
+            $parametersExpr = "@{ SkipWindowsUpdate = `$true; IncludeWinget = `$true; InstallWingetIfMissing = `$true }"
         }
         'SystemSnapshot' {
             $scriptName = 'Get-SystemSnapshot.ps1'
-            $argsExpr = '@()'
+            $parametersExpr = '@{}'
         }
         'DiskCheck' {
             $scriptName = 'DiskCheck.ps1'
-            $argsExpr = '@()'
+            $parametersExpr = '@{}'
         }
         default { throw "Unsupported task action: $TaskAction" }
     }
@@ -80,7 +80,7 @@ try {
     try { `$wc.Dispose() } catch { }
 }
 . ([ScriptBlock]::Create(`$common))
-Invoke-WumRemoteScript -Name '$scriptName' -ArgumentList $argsExpr
+Invoke-WumRemoteScript -Name '$scriptName' -Parameters $parametersExpr
 "@
     return $payload
 }

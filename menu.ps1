@@ -103,44 +103,44 @@ try {
 
         try {
             switch ($choice) {
-                '1' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -ArgumentList @('-RebootMode','Never') ; Pause-WumConsole }
-                '2' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -ArgumentList @('-RebootMode','IfNeeded') ; Pause-WumConsole }
-                '3' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -ArgumentList @('-RebootMode','Never','-IncludeWinget','-InstallWingetIfMissing') ; Pause-WumConsole }
-                '4' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -ArgumentList @('-SkipWindowsUpdate','-IncludeWinget','-InstallWingetIfMissing') ; Pause-WumConsole }
-                '5' { Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -ArgumentList @('-Mode','Repair') ; Pause-WumConsole }
+                '1' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'Never' } ; Pause-WumConsole }
+                '2' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'IfNeeded' } ; Pause-WumConsole }
+                '3' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ RebootMode = 'Never'; IncludeWinget = $true; InstallWingetIfMissing = $true } ; Pause-WumConsole }
+                '4' { Invoke-WumRemoteScript -Name 'Invoke-WinUpdate.ps1' -Parameters @{ SkipWindowsUpdate = $true; IncludeWinget = $true; InstallWingetIfMissing = $true } ; Pause-WumConsole }
+                '5' { Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -Parameters @{ Mode = 'Repair' } ; Pause-WumConsole }
                 '6' { Invoke-WumRemoteScript -Name 'DiskCheck.ps1' ; Pause-WumConsole }
                 '7' { Invoke-WumRemoteScript -Name 'Get-SystemSnapshot.ps1' ; Pause-WumConsole }
                 '8' { Invoke-WumRemoteScript -Name 'Get-EventSummary.ps1' ; Pause-WumConsole }
                 '9' { Invoke-WumRemoteScript -Name 'Test-NetworkConnectivity.ps1' ; Pause-WumConsole }
                 '10' { Invoke-WumRemoteScript -Name 'Get-NetworkInfo.ps1' ; Pause-WumConsole }
                 '11' {
-                    $repairArgs = @()
+                    $repairParameters = @{}
                     $reset = Read-Host 'Reset Windows Update cache too? This renames SoftwareDistribution/catroot2. (y/N)'
-                    if ($reset -match '^(y|yes)$') { $repairArgs += '-ResetWindowsUpdate' }
+                    if ($reset -match '^(y|yes)$') { $repairParameters.ResetWindowsUpdate = $true }
                     $dns = Read-Host 'Flush DNS cache too? (y/N)'
-                    if ($dns -match '^(y|yes)$') { $repairArgs += '-FlushDns' }
-                    Invoke-WumRemoteScript -Name 'Repair-Windows.ps1' -ArgumentList $repairArgs
+                    if ($dns -match '^(y|yes)$') { $repairParameters.FlushDns = $true }
+                    Invoke-WumRemoteScript -Name 'Repair-Windows.ps1' -Parameters $repairParameters
                     Pause-WumConsole
                 }
                 '12' {
-                    $taskArgs = @()
+                    $taskParameters = @{}
                     Write-WumSection 'Scheduled task setup'
                     Write-Host 'Actions: UpdateNoReboot, UpdateIfNeeded, UpdateWithWingetNoReboot, WingetOnly, SystemSnapshot, DiskCheck' -ForegroundColor DarkGray
                     $taskAction = Read-Host 'Task action [UpdateIfNeeded]'
-                    if (-not [string]::IsNullOrWhiteSpace($taskAction)) { $taskArgs += @('-TaskAction', $taskAction.Trim()) }
+                    if (-not [string]::IsNullOrWhiteSpace($taskAction)) { $taskParameters.TaskAction = $taskAction.Trim() }
                     $freq = Read-Host 'Frequency: Daily, Weekly, Startup, Once [Weekly]'
-                    if (-not [string]::IsNullOrWhiteSpace($freq)) { $taskArgs += @('-Frequency', $freq.Trim()) }
+                    if (-not [string]::IsNullOrWhiteSpace($freq)) { $taskParameters.Frequency = $freq.Trim() }
                     $at = Read-Host 'Time, 24-hour HH:mm [03:00]'
-                    if (-not [string]::IsNullOrWhiteSpace($at)) { $taskArgs += @('-At', $at.Trim()) }
+                    if (-not [string]::IsNullOrWhiteSpace($at)) { $taskParameters.At = $at.Trim() }
                     $day = Read-Host 'Day of week for weekly tasks [Sunday]'
-                    if (-not [string]::IsNullOrWhiteSpace($day)) { $taskArgs += @('-DayOfWeek', $day.Trim()) }
+                    if (-not [string]::IsNullOrWhiteSpace($day)) { $taskParameters.DayOfWeek = $day.Trim() }
                     $name = Read-Host 'Task name [WinUpdate MSP Helper - Remote Updates]'
-                    if (-not [string]::IsNullOrWhiteSpace($name)) { $taskArgs += @('-TaskName', $name.Trim()) }
+                    if (-not [string]::IsNullOrWhiteSpace($name)) { $taskParameters.TaskName = $name.Trim() }
                     $currentUser = Read-Host 'Run as current user instead of SYSTEM? Winget works better as current user. (y/N)'
-                    if ($currentUser -match '^(y|yes)$') { $taskArgs += '-RunAsCurrentUser' }
+                    if ($currentUser -match '^(y|yes)$') { $taskParameters.RunAsCurrentUser = $true }
                     $force = Read-Host 'Replace existing task without another prompt? (y/N)'
-                    if ($force -match '^(y|yes)$') { $taskArgs += '-Force' }
-                    Invoke-WumRemoteScript -Name 'Install-Task.ps1' -ArgumentList $taskArgs
+                    if ($force -match '^(y|yes)$') { $taskParameters.Force = $true }
+                    Invoke-WumRemoteScript -Name 'Install-Task.ps1' -Parameters $taskParameters
                     Pause-WumConsole
                 }
                 '13' {

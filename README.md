@@ -94,7 +94,7 @@ Available scheduled actions:
 Example remote-run scheduled task install:
 
 ```powershell
-$env:WINUPDATE_BASEURL='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main'; iex (irm "$env:WINUPDATE_BASEURL/Common.ps1"); Invoke-WumRemoteScript -Name 'Install-Task.ps1' -ArgumentList @('-TaskAction','UpdateIfNeeded','-Frequency','Weekly','-At','03:00','-DayOfWeek','Sunday','-Force')
+$env:WINUPDATE_BASEURL='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main'; iex (irm "$env:WINUPDATE_BASEURL/Common.ps1"); Invoke-WumRemoteScript -Name 'Install-Task.ps1' -Parameters @{ TaskAction = 'UpdateIfNeeded'; Frequency = 'Weekly'; At = '03:00'; DayOfWeek = 'Sunday'; Force = $true }
 ```
 
 ## Network/VPN checks
@@ -134,8 +134,8 @@ The client/runtime scripts still use GitHub raw URLs only. The private Gitea URL
 
 For wiki sync in Gitea Actions, create these repo secrets if the runner does not already have wiki push credentials:
 
-- `GITEA_WIKI_TOKEN` — token/password with write access to the Gitea wiki repo.
-- `GITEA_WIKI_USER` — optional username for the token. If omitted, the workflow uses the Actions actor.
+- `WIKI_TOKEN` — token/password with write access to the Gitea wiki repo.
+- `WIKI_USER` — optional username for the token. If omitted, the workflow uses the Actions actor.
 
 The workflow target is:
 
