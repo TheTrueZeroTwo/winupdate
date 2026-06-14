@@ -1,6 +1,15 @@
 # WinUpdate MSP Helper - shared in-memory helpers
 # This file is intended to be loaded from a trusted raw HTTPS URL.
 
+# Process-scope only. This allows trusted in-memory helpers and installed
+# PowerShell modules to load without changing LocalMachine/User policy.
+try {
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop
+    $global:WinUpdateMspExecutionPolicyError = $null
+} catch {
+    $global:WinUpdateMspExecutionPolicyError = $_.Exception.Message
+}
+
 if ($global:WinUpdateMspCommonLoaded) { return }
 $global:WinUpdateMspCommonLoaded = $true
 
@@ -18,6 +27,31 @@ $global:WinUpdateMspAllowedScripts = @(
     'Install-Task.ps1',
     'Test-NetworkConnectivity.ps1'
 )
+
+function Set-WumProcessExecutionPolicy {
+    try {
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop
+        $effective = Get-ExecutionPolicy
+        $list = Get-ExecutionPolicy -List
+        return [PSCustomObject]@{
+            Success       = $true
+            Effective     = [string]$effective
+            Process       = [string]($list | Where-Object Scope -eq 'Process' | Select-Object -ExpandProperty ExecutionPolicy)
+            MachinePolicy = [string]($list | Where-Object Scope -eq 'MachinePolicy' | Select-Object -ExpandProperty ExecutionPolicy)
+            UserPolicy    = [string]($list | Where-Object Scope -eq 'UserPolicy' | Select-Object -ExpandProperty ExecutionPolicy)
+            Error         = $null
+        }
+    } catch {
+        return [PSCustomObject]@{
+            Success       = $false
+            Effective     = [string](Get-ExecutionPolicy)
+            Process       = [string](Get-ExecutionPolicy -Scope Process)
+            MachinePolicy = [string](Get-ExecutionPolicy -Scope MachinePolicy)
+            UserPolicy    = [string](Get-ExecutionPolicy -Scope UserPolicy)
+            Error         = $_.Exception.Message
+        }
+    }
+}
 
 function Set-WumTls {
     try {
@@ -193,6 +227,11 @@ function Invoke-WumRemoteScript {
         throw "Remote script was empty: $url"
     }
 
+    $policyStatus = Set-WumProcessExecutionPolicy
+    if (-not $policyStatus.Success) {
+        Write-WumWarn "Could not set process-only execution policy Bypass: $($policyStatus.Error)"
+    }
+
     $scriptBlock = [ScriptBlock]::Create($code)
 
     if ($Parameters.Count -gt 0) {
@@ -298,7 +337,7 @@ function Get-WumMenuOneLiner {
     $u = "$base/menu.ps1"
     $r = "$base/README.md"
 
-    return ('$u=' + "'$u'" + '; $r=' + "'$r'" + '; try { iex (irm $u) } catch { try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host ("Failed to load menu. Open README: " + $r) -ForegroundColor Yellow; throw } }')
+    return ('Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; $u=' + "'$u'" + '; $r=' + "'$r'" + '; try { iex (irm $u) } catch { try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host ("Failed to load menu. Open README: " + $r) -ForegroundColor Yellow; throw } }')
 }
 
 function Get-WumReadmeUrl {
@@ -311,4 +350,5 @@ function Pause-WumConsole {
     try { [void](Read-Host $Message) } catch { }
 }
 
+Set-WumProcessExecutionPolicy | Out-Null
 Set-WumTls

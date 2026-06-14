@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop } catch { }
 
 if ($BaseUrl -and -not [string]::IsNullOrWhiteSpace($BaseUrl)) {
     $env:WINUPDATE_BASEURL = $BaseUrl.TrimEnd('/')
@@ -49,16 +50,16 @@ function Show-WumLaunchCommands {
     Write-Host (Get-WumMenuOneLiner -BaseUrl $env:WINUPDATE_BASEURL.TrimEnd('/')) -ForegroundColor White
     Write-Host ''
     Write-Host 'Short form for newer PowerShell:' -ForegroundColor Yellow
-    Write-Host "iex (irm '$($env:WINUPDATE_BASEURL.TrimEnd('/'))/menu.ps1')" -ForegroundColor White
+    Write-Host "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; iex (irm '$($env:WINUPDATE_BASEURL.TrimEnd('/'))/menu.ps1')" -ForegroundColor White
     Write-Host ''
     Write-Host 'Older Windows PowerShell fallback:' -ForegroundColor Yellow
-    Write-Host "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString('$($env:WINUPDATE_BASEURL.TrimEnd('/'))/menu.ps1'))" -ForegroundColor White
+    Write-Host "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString('$($env:WINUPDATE_BASEURL.TrimEnd('/'))/menu.ps1'))" -ForegroundColor White
     Write-Host ''
     Write-Host 'README fallback / instructions:' -ForegroundColor Yellow
     Write-Host (Get-WumReadmeUrl -BaseUrl $env:WINUPDATE_BASEURL.TrimEnd('/')) -ForegroundColor White
     Write-Host ''
     Write-Host 'Custom web mirror for this session:' -ForegroundColor Yellow
-    Write-Host '$env:WINUPDATE_BASEURL=''https://YOUR-WEB-SERVER/winupdate''; iex (irm "$env:WINUPDATE_BASEURL/menu.ps1")' -ForegroundColor White
+    Write-Host 'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; $env:WINUPDATE_BASEURL=''https://YOUR-WEB-SERVER/winupdate''; iex (irm "$env:WINUPDATE_BASEURL/menu.ps1")' -ForegroundColor White
 }
 
 if (-not (Test-WumAdmin)) {

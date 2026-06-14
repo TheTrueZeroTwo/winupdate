@@ -9,22 +9,24 @@ The intended workflow is to open **PowerShell as Administrator** and run **one l
 Recommended elevated PowerShell one-liner with built-in fallback:
 
 ```powershell
-$u='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1'; $r='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/README.md'; try { iex (irm $u) } catch { try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host "Failed to load menu. Open README: $r" -ForegroundColor Yellow; throw } }
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; $u='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1'; $r='https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/README.md'; try { iex (irm $u) } catch { try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host "Failed to load menu. Open README: $r" -ForegroundColor Yellow; throw } }
 ```
 
 Short form for newer PowerShell:
 
 ```powershell
-iex (irm 'https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1')
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; iex (irm 'https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1')
 ```
 
 Older Windows PowerShell fallback:
 
 ```powershell
-[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1'))
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/TheTrueZeroTwo/winupdate/main/menu.ps1'))
 ```
 
 If the one-liner fails because of proxy, TLS, or PowerShell policy issues, open the README on GitHub and copy the fallback command.
+
+`Set-ExecutionPolicy -Scope Process Bypass` applies only to the current PowerShell process. It does not change the user's or computer's persistent execution-policy settings. This is required so the installed `PSWindowsUpdate` module can be imported on systems whose default local policy is `Restricted`.
 
 ## Design goals
 
@@ -59,7 +61,7 @@ The menu can run:
 GitHub raw is the default and recommended runtime source. For a separate public MSP-hosted mirror that does not require login and serves raw files directly, set `WINUPDATE_BASEURL` before launching the menu:
 
 ```powershell
-$env:WINUPDATE_BASEURL='https://tools.example.com/winupdate'; $u="$env:WINUPDATE_BASEURL/menu.ps1"; $r="$env:WINUPDATE_BASEURL/README.md"; try { iex (irm $u) } catch { try { [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host "Failed to load menu. Open README: $r" -ForegroundColor Yellow; throw } }
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; $env:WINUPDATE_BASEURL='https://tools.example.com/winupdate'; $u="$env:WINUPDATE_BASEURL/menu.ps1"; $r="$env:WINUPDATE_BASEURL/README.md"; try { iex (irm $u) } catch { try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iex ((New-Object Net.WebClient).DownloadString($u)) } catch { Write-Host "Failed to load menu. Open README: $r" -ForegroundColor Yellow; throw } }
 ```
 
 The URL must expose these raw files directly:

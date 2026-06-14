@@ -105,3 +105,19 @@ if ($legacy.RebootMode -ne 'Never' -or -not $legacy.IncludeWinget -or -not $lega
 }
 
 Write-Host 'PASS: remote named-parameter binding tests passed for menu options 1-5.'
+
+$CommonText = Get-Content -Raw -Path (Join-Path $Root 'Common.ps1')
+if ($CommonText -notmatch 'Set-ExecutionPolicy\s+-Scope\s+Process\s+-ExecutionPolicy\s+Bypass') {
+    throw 'Common.ps1 must set execution policy to Bypass at Process scope only.'
+}
+if ($CommonText -match 'Set-ExecutionPolicy\s+-Scope\s+(LocalMachine|CurrentUser)') {
+    throw 'Common.ps1 must not persistently change LocalMachine or CurrentUser execution policy.'
+}
+
+$UpdateText = Get-Content -Raw -Path (Join-Path $Root 'Invoke-WinUpdate.ps1')
+if ($UpdateText -notmatch 'Set-WumProcessExecutionPolicy') {
+    throw 'Invoke-WinUpdate.ps1 must request process-only execution-policy setup before importing PSWindowsUpdate.'
+}
+
+Write-Host 'PASS: process-only execution-policy regression checks passed.'
+

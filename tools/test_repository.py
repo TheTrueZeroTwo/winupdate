@@ -109,6 +109,17 @@ def main() -> None:
     if '[hashtable]$Parameters' not in common or 'ConvertTo-WumParameterHashtable' not in common:
         fail('Common.ps1 must support hashtable parameter splatting and backward-compatible ArgumentList conversion.')
 
+    if not re.search(r'Set-ExecutionPolicy\s+-Scope\s+Process\s+-ExecutionPolicy\s+Bypass', common, re.IGNORECASE):
+        fail('Common.ps1 must set execution policy to Bypass at Process scope only.')
+    if re.search(r'Set-ExecutionPolicy\s+-Scope\s+(LocalMachine|CurrentUser)', common, re.IGNORECASE):
+        fail('Common.ps1 must not persistently change LocalMachine or CurrentUser execution policy.')
+
+    update_script = read(ROOT / 'Invoke-WinUpdate.ps1')
+    if 'Set-WumProcessExecutionPolicy' not in update_script:
+        fail('Invoke-WinUpdate.ps1 must request process-only execution-policy setup.')
+    if "Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -ArgumentList" in update_script:
+        fail('Invoke-WinUpdate.ps1 must use named hashtable parameters for Install-Winget.ps1.')
+
     install_task = read(ROOT / 'Install-Task.ps1')
     if '-EncodedCommand' not in install_task:
         fail('Install-Task.ps1 should register an encoded remote-run command, not local script files.')
@@ -158,7 +169,7 @@ def main() -> None:
             if re.search(pattern, text, flags=re.IGNORECASE):
                 fail(f'{path.name} appears to save repo scripts locally; matched {pattern!r}')
 
-    print(f'PASS: checked {len(PS_FILES)} PowerShell scripts, Gitea workflows, GitHub-only runtime URLs, WIKI_TOKEN/WIKI_USER wiki sync automation, README, wiki source, scheduled task, and remote-only rules.')
+    print(f'PASS: checked {len(PS_FILES)} PowerShell scripts, Gitea workflows, GitHub-only runtime URLs, WIKI_TOKEN/WIKI_USER wiki sync automation, README, wiki source, scheduled task, process-only execution policy, and remote-only rules.')
 
 
 if __name__ == '__main__':

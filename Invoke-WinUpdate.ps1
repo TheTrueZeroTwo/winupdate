@@ -15,9 +15,22 @@ $baseUrl = if ($env:WINUPDATE_BASEURL) { $env:WINUPDATE_BASEURL.TrimEnd('/') } e
 $commonCode = (New-Object Net.WebClient).DownloadString("$baseUrl/Common.ps1")
 . ([ScriptBlock]::Create($commonCode))
 
+$policyStatus = Set-WumProcessExecutionPolicy
+
 $log = Start-WumLog -Name 'windows-update'
 try {
     Assert-WumAdmin
+    Write-WumSection 'PowerShell execution policy'
+    if ($policyStatus.Success) {
+        Write-WumStep "Process-only policy: $($policyStatus.Process); effective policy: $($policyStatus.Effective)"
+        Write-Host 'This change lasts only for the current PowerShell process.' -ForegroundColor DarkGray
+        if ($policyStatus.MachinePolicy -notin @('', 'Undefined') -or $policyStatus.UserPolicy -notin @('', 'Undefined')) {
+            Write-WumWarn "Group Policy is configured (MachinePolicy=$($policyStatus.MachinePolicy), UserPolicy=$($policyStatus.UserPolicy)). It may override Process scope."
+        }
+    } else {
+        Write-WumWarn "Could not set process-only Bypass: $($policyStatus.Error)"
+    }
+
     Write-WumSection 'Windows update helper'
     Get-WumOsSummary | Format-List
 
@@ -42,7 +55,12 @@ try {
             Install-Module -Name PSWindowsUpdate -Scope AllUsers -Force -AllowClobber -ErrorAction Stop
         }
 
-        Import-Module PSWindowsUpdate -Force -ErrorAction Stop
+        try {
+            Import-Module PSWindowsUpdate -Force -ErrorAction Stop
+        } catch {
+            $policySummary = (Get-ExecutionPolicy -List | Out-String).Trim()
+            throw "PSWindowsUpdate could not be imported. Process-scope Bypass was requested, but a Group Policy or security control may still be blocking module scripts.`n$policySummary`nOriginal error: $($_.Exception.Message)"
+        }
 
         if (-not $SkipMicrosoftUpdate) {
             try {
@@ -78,7 +96,7 @@ try {
         Write-WumSection 'Winget application upgrades'
         $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
         if (-not $winget -and $InstallWingetIfMissing) {
-            Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -ArgumentList @('-Mode','Ensure')
+            Invoke-WumRemoteScript -Name 'Install-Winget.ps1' -Parameters @{ Mode = 'Ensure' }
             $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
         }
 
